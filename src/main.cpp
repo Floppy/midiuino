@@ -1,10 +1,13 @@
 #include <Arduino.h>
 #include <Adafruit_MCP4725.h>
+#include <MIDI.h>
 
 static const unsigned gatePin = 13;
 
 Adafruit_MCP4725 dac;
 static const unsigned dacAddress = 0x62;
+
+MIDI_CREATE_DEFAULT_INSTANCE();
 
 void press(int pitch) {
   digitalWrite(gatePin, HIGH);
@@ -22,6 +25,16 @@ void play(int pitch, int length) {
   release();
 }
 
+void handleNoteOn(byte inChannel, byte inNote, byte inVelocity)
+{
+  press(inNote);
+}
+
+void handleNoteOff(byte inChannel, byte inNote, byte inVelocity)
+{
+  release();
+}
+
 void setup()
 {
   // Gate
@@ -29,8 +42,13 @@ void setup()
   // CV dac
   dac.begin(dacAddress);
   dac.setVoltage(0, false);
+  // MIDI
+  MIDI.setHandleNoteOn(handleNoteOn);
+  MIDI.setHandleNoteOff(handleNoteOff);
+  MIDI.begin(MIDI_CHANNEL_OMNI);
 }
 
 void loop()
 {
+  MIDI.read();
 }
